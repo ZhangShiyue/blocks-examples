@@ -1,5 +1,6 @@
 import numpy
 
+from fuel import config
 from fuel.datasets import TextFile
 from fuel.schemes import ConstantScheme
 from fuel.streams import DataStream
@@ -63,7 +64,7 @@ class PaddingWithEOS(Padding):
             data_with_masks.append(padded_data)
 
             mask = numpy.zeros((len(source_data), max_sequence_length),
-                               self.mask_dtype)
+                               config.floatX)
             for i, sequence_length in enumerate(lengths):
                 mask[i, :sequence_length] = 1
             data_with_masks.append(mask)

@@ -2,6 +2,7 @@
 import logging
 import numpy
 import os
+import theano
 import time
 
 from contextlib import closing
@@ -42,7 +43,7 @@ class SaveLoadUtils(object):
                     name_ = name.replace(BRICK_DELIMITER, '/')
                     if not name_.startswith('/'):
                         name_ = '/' + name_
-                    param_values[name_] = value
+                    param_values[name_] = value.astype(theano.config.floatX)
         return param_values
 
     def save_parameter_values(self, param_values, path):
