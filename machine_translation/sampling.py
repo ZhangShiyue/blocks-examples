@@ -11,6 +11,8 @@ import time
 from blocks.extensions import SimpleExtension
 from blocks.search import BeamSearch
 
+from checkpoint import SaveLoadUtils
+
 from subprocess import Popen, PIPE
 
 logger = logging.getLogger(__name__)
@@ -112,7 +114,7 @@ class Sampler(SimpleExtension, SamplingBase):
             print()
 
 
-class BleuValidator(SimpleExtension, SamplingBase):
+class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
     # TODO: a lot has been changed in NMT, sync respectively
     """Implements early stopping based on BLEU score."""
 
@@ -282,8 +284,8 @@ class BleuValidator(SimpleExtension, SamplingBase):
             # Save the model here
             s = signal.signal(signal.SIGINT, signal.SIG_IGN)
             logger.info("Saving new model {}".format(model.path))
-            numpy.savez(
-                model.path, **self.main_loop.model.get_parameter_dict())
+            params_to_save = self.main_loop.model.get_parameter_values()
+            self.save_parameter_values(params_to_save, model.path)
             numpy.savez(
                 os.path.join(self.config['saveto'], 'val_bleu_scores.npz'),
                 bleu_scores=self.val_bleu_curve)
