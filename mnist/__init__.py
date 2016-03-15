@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 from theano import tensor
 
 from blocks.algorithms import GradientDescent, Scale
-from blocks.bricks import MLP, Tanh, Softmax, WEIGHT
+from blocks.bricks import MLP, Tanh, Softmax
 from blocks.bricks.cost import CategoricalCrossEntropy, MisclassificationRate
 from blocks.initialization import IsotropicGaussian, Constant
 from fuel.streams import DataStream
@@ -22,9 +22,10 @@ from blocks.extensions.saveload import Checkpoint
 from blocks.extensions.monitoring import (DataStreamMonitoring,
                                           TrainingDataMonitoring)
 from blocks.main_loop import MainLoop
+from blocks.roles import WEIGHT
 
 try:
-    from blocks.extras.extensions.plot import Plot
+    from blocks_extras.extensions.plot import Plot
     BLOCKS_EXTRAS_AVAILABLE = True
 except:
     BLOCKS_EXTRAS_AVAILABLE = False
@@ -37,7 +38,7 @@ def main(save_to, num_epochs):
     mlp.initialize()
     x = tensor.matrix('features')
     y = tensor.lmatrix('targets')
-    probs = mlp.apply(tensor.flatten(x, outdim=2))
+    probs = mlp.apply(x)
     cost = CategoricalCrossEntropy().apply(y.flatten(), probs)
     error_rate = MisclassificationRate().apply(y.flatten(), probs)
 
