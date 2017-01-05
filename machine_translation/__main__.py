@@ -38,10 +38,10 @@ parser.add_argument(
 parser.add_argument(
         "--mode", choices=["train", "test"], default='train',
         help="The mode to run. In the `train` mode a model is trained."
-             " In the `translate` mode a trained model is used to translate"
-             " an input file and generates tokenized translation.")
+             " In the 'test` mode a best(or trained) model is tested on specified"
+             " test file in configurations and print the blue score.")
 parser.add_argument(
-        "--best_params", default='', help="Input the params of best model")
+        "--best_params", default='', help="Input the best model")
 args = parser.parse_args()
 
 if __name__ == "__main__":
