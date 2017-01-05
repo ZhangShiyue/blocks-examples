@@ -56,8 +56,8 @@ Blocks:
 Changes in branch 'add_test'
 ---------------------------------
 The 'add_test' branch is modified based on 'add_translate' branch. The biggest difference is that 'add_translate'
-branch loads most recent model to do translate, while 'add_test' branch loads beat model, which is specified by
-'--best_params', to do test and print the blue score on test set.
+branch loads most recent model to do translate, while 'add_test' branch loads best model (or any trained model),
+which is specified by '--best_params', to do test and print the blue score on the 'test_set' specified in configurations.
 
 There are some other small differences, such as adding loging config, modified configurations, 15 groundtruthes for
 validation and testing...
