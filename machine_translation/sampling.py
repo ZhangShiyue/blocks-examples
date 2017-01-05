@@ -10,11 +10,15 @@ import time
 
 from blocks.extensions import SimpleExtension
 from blocks.search import BeamSearch
-
-from checkpoint import SaveLoadUtils
+from blocks.serialization import BRICK_DELIMITER
 
 from subprocess import Popen, PIPE
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename='run.log',
+                    filemode='a')
 logger = logging.getLogger(__name__)
 
 
@@ -84,7 +88,7 @@ class Sampler(SimpleExtension, SamplingBase):
 
         # TODO: this is problematic for boundary conditions, eg. last batch
         sample_idx = numpy.random.choice(
-            batch_size, hook_samples, replace=False)
+                batch_size, hook_samples, replace=False)
         src_batch = batch[self.main_loop.data_stream.mask_sources[0]]
         trg_batch = batch[self.main_loop.data_stream.mask_sources[1]]
 
@@ -114,7 +118,7 @@ class Sampler(SimpleExtension, SamplingBase):
             print()
 
 
-class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
+class BleuValidator(SimpleExtension, SamplingBase):
     # TODO: a lot has been changed in NMT, sync respectively
     """Implements early stopping based on BLEU score."""
 
@@ -144,7 +148,14 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
         self.val_bleu_curve = []
         self.beam_search = BeamSearch(samples=samples)
         self.multibleu_cmd = ['perl', self.config['bleu_script'],
-                              self.config['val_set_grndtruth'], '<']
+                              self.config['val_set_grndtruth0'], self.config['val_set_grndtruth1'],
+                              self.config['val_set_grndtruth2'], self.config['val_set_grndtruth3'],
+                              self.config['val_set_grndtruth4'], self.config['val_set_grndtruth5'],
+                              self.config['val_set_grndtruth6'], self.config['val_set_grndtruth7'],
+                              self.config['val_set_grndtruth8'], self.config['val_set_grndtruth9'],
+                              self.config['val_set_grndtruth10'], self.config['val_set_grndtruth11'],
+                              self.config['val_set_grndtruth12'], self.config['val_set_grndtruth13'],
+                              self.config['val_set_grndtruth14'], self.config['val_set_grndtruth15'], '<']
 
         # Create saving directory if it does not exist
         if not os.path.exists(self.config['saveto']):
@@ -153,7 +164,7 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
         if self.config['reload']:
             try:
                 bleu_score = numpy.load(os.path.join(self.config['saveto'],
-                                        'val_bleu_scores.npz'))
+                                                     'val_bleu_scores.npz'))
                 self.val_bleu_curve = bleu_score['bleu_scores'].tolist()
 
                 # Track n best previous bleu scores
@@ -197,15 +208,15 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
             """
 
             seq = self._oov_to_unk(
-                line[0], self.config['src_vocab_size'], self.unk_idx)
+                    line[0], self.config['src_vocab_size'], self.unk_idx)
             input_ = numpy.tile(seq, (self.config['beam_size'], 1))
 
             # draw sample, checking to ensure we don't get an empty string back
             trans, costs = \
                 self.beam_search.search(
-                    input_values={self.source_sentence: input_},
-                    max_length=3*len(seq), eol_symbol=self.eos_idx,
-                    ignore_first_eol=True)
+                        input_values={self.source_sentence: input_},
+                        max_length=3 * len(seq), eol_symbol=self.eos_idx,
+                        ignore_first_eol=True)
 
             # normalize costs according to the sequence lengths
             if self.normalize:
@@ -223,7 +234,7 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
 
                 except ValueError:
                     logger.info(
-                        "Can NOT find a translation for line: {}".format(i+1))
+                            "Can NOT find a translation for line: {}".format(i + 1))
                     trans_out = '<UNK>'
 
                 if j == 0:
@@ -234,7 +245,7 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
 
             if i != 0 and i % 100 == 0:
                 logger.info(
-                    "Translated {} lines of validation set...".format(i))
+                        "Translated {} lines of validation set...".format(i))
 
             mb_subprocess.stdin.flush()
 
@@ -249,7 +260,7 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
         logger.info(stdout)
         out_parse = re.match(r'BLEU = [-.0-9]+', stdout)
         logger.info("Validation Took: {} minutes".format(
-            float(time.time() - val_start_time) / 60.))
+                float(time.time() - val_start_time) / 60.))
         assert out_parse is not None
 
         # extract the score
@@ -262,7 +273,7 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
 
     def _is_valid_to_save(self, bleu_score):
         if not self.best_models or min(self.best_models,
-           key=operator.attrgetter('bleu_score')).bleu_score < bleu_score:
+                                       key=operator.attrgetter('bleu_score')).bleu_score < bleu_score:
             return True
         return False
 
@@ -284,12 +295,137 @@ class BleuValidator(SimpleExtension, SamplingBase, SaveLoadUtils):
             # Save the model here
             s = signal.signal(signal.SIGINT, signal.SIG_IGN)
             logger.info("Saving new model {}".format(model.path))
+
             params_to_save = self.main_loop.model.get_parameter_values()
-            self.save_parameter_values(params_to_save, model.path)
+            params_to_save = {name.replace("/", BRICK_DELIMITER): param
+                              for name, param in params_to_save.items()}
             numpy.savez(
-                os.path.join(self.config['saveto'], 'val_bleu_scores.npz'),
-                bleu_scores=self.val_bleu_curve)
+                    model.path, **params_to_save)
+
+            numpy.savez(
+                    os.path.join(self.config['saveto'], 'val_bleu_scores.npz'),
+                    bleu_scores=self.val_bleu_curve)
             signal.signal(signal.SIGINT, s)
+
+
+class BleuTestor:
+    # TODO: a lot has been changed in NMT, sync respectively
+    """Test the model on test set and return the BLUE score"""
+
+    def __init__(self, source_sentence, samples, model, data_stream,
+                 config, trg_ivocab, n_best=1, normalize=True):
+        # TODO: change config structure
+        self.source_sentence = source_sentence
+        self.samples = samples
+        self.model = model
+        self.data_stream = data_stream
+        self.config = config
+        self.n_best = n_best
+        self.normalize = normalize
+        self.verbose = config.get('test_set_out', None)
+
+        # Helpers
+        self.vocab = data_stream.dataset.dictionary
+        self.trg_ivocab = trg_ivocab
+        self.unk_sym = data_stream.dataset.unk_token
+        self.eos_sym = data_stream.dataset.eos_token
+        self.unk_idx = self.vocab[self.unk_sym]
+        self.eos_idx = self.vocab[self.eos_sym]
+        self.best_models = []
+        self.val_bleu_curve = []
+        self.beam_search = BeamSearch(samples=samples)
+        self.multibleu_cmd = ['perl', self.config['bleu_script'],
+                              self.config['test_set_grndtruth0'], self.config['test_set_grndtruth1'],
+                              self.config['test_set_grndtruth2'], self.config['test_set_grndtruth3'],
+                              self.config['test_set_grndtruth4'], self.config['test_set_grndtruth5'],
+                              self.config['test_set_grndtruth6'], self.config['test_set_grndtruth7'],
+                              self.config['test_set_grndtruth8'], self.config['test_set_grndtruth9'],
+                              self.config['test_set_grndtruth10'], self.config['test_set_grndtruth11'],
+                              self.config['test_set_grndtruth12'], self.config['test_set_grndtruth13'],
+                              self.config['test_set_grndtruth14'], self.config['test_set_grndtruth15'], '<']
+
+    def do(self):
+        # Evaluate
+        return self._evaluate_model()
+
+    def _evaluate_model(self):
+
+        logger.info("Started Validation: ")
+        val_start_time = time.time()
+        mb_subprocess = Popen(self.multibleu_cmd, stdin=PIPE, stdout=PIPE)
+        total_cost = 0.0
+
+        if self.verbose:
+            ftrans = open(self.config['test_set_out'], 'w')
+
+        for i, line in enumerate(self.data_stream.get_epoch_iterator()):
+            """
+            Load the sentence, retrieve the sample, write to file
+            """
+            sutils = SamplingBase()
+            seq = sutils._oov_to_unk(
+                    line[0], self.config['src_vocab_size'], self.unk_idx)
+            input_ = numpy.tile(seq, (self.config['beam_size'], 1))
+
+            # draw sample, checking to ensure we don't get an empty string back
+            trans, costs = \
+                self.beam_search.search(
+                        input_values={self.source_sentence: input_},
+                        max_length=3 * len(seq), eol_symbol=self.eos_idx,
+                        ignore_first_eol=True)
+
+            # normalize costs according to the sequence lengths
+            if self.normalize:
+                lengths = numpy.array([len(s) for s in trans])
+                costs = costs / lengths
+
+            nbest_idx = numpy.argsort(costs)[:self.n_best]
+            for j, best in enumerate(nbest_idx):
+                try:
+                    total_cost += costs[best]
+                    trans_out = trans[best]
+
+                    # convert idx to words
+                    trans_out = sutils._idx_to_word(trans_out, self.trg_ivocab)
+
+                except ValueError:
+                    logger.info(
+                            "Can NOT find a translation for line: {}".format(i + 1))
+                    trans_out = '<UNK>'
+
+                if j == 0:
+                    # Write to subprocess and file if it exists
+                    print(trans_out, file=mb_subprocess.stdin)
+                    if self.verbose:
+                        print(trans_out, file=ftrans)
+
+            if i != 0 and i % 100 == 0:
+                logger.info(
+                        "Translated {} lines of test set...".format(i))
+
+            mb_subprocess.stdin.flush()
+
+        logger.info("Total cost of the test: {}".format(total_cost))
+        self.data_stream.reset()
+        if self.verbose:
+            ftrans.close()
+
+        # send end of file, read output.
+        mb_subprocess.stdin.close()
+        stdout = mb_subprocess.stdout.readline()
+        logger.info(stdout)
+        out_parse = re.match(r'BLEU = [-.0-9]+', stdout)
+        logger.info("Test Took: {} minutes".format(
+                float(time.time() - val_start_time) / 60.))
+        assert out_parse is not None
+
+        # extract the score
+        bleu_score = float(out_parse.group()[6:])
+        self.val_bleu_curve.append(bleu_score)
+        logger.info(bleu_score)
+        mb_subprocess.terminate()
+
+        return bleu_score
 
 
 class ModelInfo:
@@ -301,6 +437,6 @@ class ModelInfo:
 
     def _generate_path(self, path):
         gen_path = os.path.join(
-            path, 'best_bleu_model_%d_BLEU%.2f.npz' %
-            (int(time.time()), self.bleu_score) if path else None)
+                path, 'best_bleu_model_%d_BLEU%.2f.npz' %
+                      (int(time.time()), self.bleu_score) if path else None)
         return gen_path

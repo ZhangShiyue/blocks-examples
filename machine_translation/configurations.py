@@ -1,4 +1,4 @@
-def get_config_cs2en():
+def get_config_zh2en():
     config = {}
 
     # Model related -----------------------------------------------------------
@@ -15,7 +15,7 @@ def get_config_cs2en():
     config['dec_embed'] = 620
 
     # Where to save model, this corresponds to 'prefix' in groundhog
-    config['saveto'] = 'search_model_cs2en'
+    config['saveto'] = 'search_model_zh2en'
 
     # Optimization related ----------------------------------------------------
 
@@ -48,18 +48,18 @@ def get_config_cs2en():
     # Vocabulary/dataset related ----------------------------------------------
 
     # Root directory for dataset
-    datadir = './data/'
+    datadir = 'machine_translation/data/'
 
     # Module name of the stream that will be used
     config['stream'] = 'stream'
 
     # Source and target vocabularies
-    config['src_vocab'] = datadir + 'vocab.cs-en.cs.pkl'
-    config['trg_vocab'] = datadir + 'vocab.cs-en.en.pkl'
+    config['src_vocab'] = datadir + 'vocab.zh-en.zh.pkl'
+    config['trg_vocab'] = datadir + 'vocab.zh-en.en.pkl'
 
     # Source and target datasets
-    config['src_data'] = datadir + 'news-commentary-v10.cs-en.cs.tok.shuf'
-    config['trg_data'] = datadir + 'news-commentary-v10.cs-en.en.tok.shuf'
+    config['src_data'] = datadir + 'train.zh-en.zh.tok.shuf'
+    config['trg_data'] = datadir + 'train.zh-en.en.tok.shuf'
 
     # Source and target vocabulary sizes, should include bos, eos, unk tokens
     config['src_vocab_size'] = 30000
@@ -80,10 +80,46 @@ def get_config_cs2en():
     config['bleu_script'] = datadir + 'multi-bleu.perl'
 
     # Validation set source file
-    config['val_set'] = datadir + 'newstest2013.cs.tok'
+    config['val_set'] = datadir + 'devset/devset1_2.zh'
 
     # Validation set gold file
-    config['val_set_grndtruth'] = datadir + 'newstest2013.en.tok'
+    config['val_set_grndtruth0'] = datadir + 'devset/devset1_2.lc.en0'
+    config['val_set_grndtruth1'] = datadir + 'devset/devset1_2.lc.en1'
+    config['val_set_grndtruth2'] = datadir + 'devset/devset1_2.lc.en2'
+    config['val_set_grndtruth3'] = datadir + 'devset/devset1_2.lc.en3'
+    config['val_set_grndtruth4'] = datadir + 'devset/devset1_2.lc.en4'
+    config['val_set_grndtruth5'] = datadir + 'devset/devset1_2.lc.en5'
+    config['val_set_grndtruth6'] = datadir + 'devset/devset1_2.lc.en6'
+    config['val_set_grndtruth7'] = datadir + 'devset/devset1_2.lc.en7'
+    config['val_set_grndtruth8'] = datadir + 'devset/devset1_2.lc.en8'
+    config['val_set_grndtruth9'] = datadir + 'devset/devset1_2.lc.en9'
+    config['val_set_grndtruth10'] = datadir + 'devset/devse1_2.lc.en10'
+    config['val_set_grndtruth11'] = datadir + 'devset/devse1_2.lc.en11'
+    config['val_set_grndtruth12'] = datadir + 'devset/devset1_2.lc.en12'
+    config['val_set_grndtruth13'] = datadir + 'devset/devset1_2.lc.en13'
+    config['val_set_grndtruth14'] = datadir + 'devset/devset1_2.lc.en14'
+    config['val_set_grndtruth15'] = datadir + 'devset/devset1_2.lc.en15'
+
+    # Test set source file
+    config['test_set'] = datadir + 'devset/devset3.zh'
+
+    # Test set gold file
+    config['test_set_grndtruth0'] = datadir + 'devset/devset3.lc.en0'
+    config['test_set_grndtruth1'] = datadir + 'devset/devset3.lc.en1'
+    config['test_set_grndtruth2'] = datadir + 'devset/devset3.lc.en2'
+    config['test_set_grndtruth3'] = datadir + 'devset/devset3.lc.en3'
+    config['test_set_grndtruth4'] = datadir + 'devset/devset3.lc.en4'
+    config['test_set_grndtruth5'] = datadir + 'devset/devset3.lc.en5'
+    config['test_set_grndtruth6'] = datadir + 'devset/devset3.lc.en6'
+    config['test_set_grndtruth7'] = datadir + 'devset/devset3.lc.en7'
+    config['test_set_grndtruth8'] = datadir + 'devset/devset3.lc.en8'
+    config['test_set_grndtruth9'] = datadir + 'devset/devset3.lc.en9'
+    config['test_set_grndtruth10'] = datadir + 'devset/devse3.lc.en10'
+    config['test_set_grndtruth11'] = datadir + 'devset/devse3.lc.en11'
+    config['test_set_grndtruth12'] = datadir + 'devset/devset3.lc.en12'
+    config['test_set_grndtruth13'] = datadir + 'devset/devset3.lc.en13'
+    config['test_set_grndtruth14'] = datadir + 'devset/devset3.lc.en14'
+    config['test_set_grndtruth15'] = datadir + 'devset/devset3.lc.en15'
 
     # Print validation output to file
     config['output_val_set'] = True
@@ -91,13 +127,16 @@ def get_config_cs2en():
     # Validation output file
     config['val_set_out'] = config['saveto'] + '/validation_out.txt'
 
+    # Test output file
+    config['test_set_out'] = config['saveto'] + '/test_out.txt'
+
     # Beam-size
     config['beam_size'] = 12
 
     # Timing/monitoring related -----------------------------------------------
 
     # Maximum number of updates
-    config['finish_after'] = 1000000
+    config['finish_after'] = 100000
 
     # Reload model from files if exist
     config['reload'] = True
@@ -115,6 +154,6 @@ def get_config_cs2en():
     config['bleu_val_freq'] = 5000
 
     # Start bleu validation after this many updates
-    config['val_burn_in'] = 80000
+    config['val_burn_in'] = 10000
 
     return config
