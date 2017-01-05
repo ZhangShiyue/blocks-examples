@@ -52,3 +52,14 @@ Blocks:
 * `Character-level RNN <https://github.com/johnarevalo/blocks-char-rnn>`_
 * `DRAW model <https://github.com/jbornschein/draw>`_
 * `Speech recognition <https://github.com/rizar/attention-lvcsr>`_
+
+Changes in branch 'add_test'
+---------------------------------
+The 'add_test' branch is modified based on 'add_translate' branch. The biggest difference is that 'add_translate'
+branch loads most recent model to do translate, while 'add_test' branch loads beat model, which is specified by
+'--best_params', to do test and print the blue score on test set.
+
+There are some other small differences, such as adding loging config, modified configurations...
+
+I can use it normally on chinese-to-english translation, and if you have any problem, I'm always ready to help.
+(My email: byryuer@gmail.com)
